@@ -4,8 +4,14 @@ Written by Gautam Mittal.
 **/
 
 /* Initialize new PIXI application */
-let app = new PIXI.Application({width: 512, height: 512})
+let app = new PIXI.Application({width: window.innerWidth, height: window.innerHeight})
+app.renderer.view.style.position = "absolute"
+app.renderer.view.style.display = "block"
+app.renderer.autoResize = true
 document.body.appendChild(app.view)
+window.addEventListener("resize", () => {
+    app.renderer.resize(window.innerWidth, window.innerHeight)
+})
 
 /* Create sprite array */
 let boids = []
@@ -21,18 +27,6 @@ let setup = () => {
         boids[i] = circle
         app.stage.addChild(circle)
     }
-
-    //{width: window.innerWidth, height: window.innerHeight})
-
-    /*
-      app.renderer.view.style.position = "absolute"
-      app.renderer.view.style.display = "block"
-      app.renderer.autoResize = true
-
-      window.addEventListener("resize", () => {
-      app.renderer.resize(window.innerWidth, window.innerHeight)
-      })
-    */
 }
 
 let gameLoop = () => {
