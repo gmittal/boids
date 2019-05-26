@@ -4,34 +4,55 @@
 
 class Boid {
     constructor() {
-        this.position = createVector(100 * Math.random() + 20, 100 * Math.random() + 20)
-        this.velocity = createVector(-4 * Math.random() - 0.5, 4 * Math.random() - 0.5)
+        this.position = createVector(windowWidth / 2, windowHeight / 2)
+        this.velocity = createVector(4 * (Math.random() - 0.5), 4 * (Math.random() - 0.5))
         this.perception = 10
+        this.maxSpeed = 1
     }
 
     align() {
         let avg = createVector()
+        let total = 0
         for (let b of boids) {
             let d = this.position.dist(b.position)
-            if (b != this && d < this.perception)
+            if (b != this && d < this.perception) {
                 avg.add(b.velocity)
+                total += 1
+            }
+
         }
-        avg.div(boids.length - 1)
-        return avg.sub(this.velocity).div(30)
+        avg.div(total)
+        return avg.sub(this.velocity).div(100)
     }
 
     attract() {
-        return createVector(0, 0)
+        let center = createVector()
+        let total = 0
+        for (let b of boids) {
+            let d = this.position.dist(b.position)
+            if (b != this && d < this.perception) {
+                center.add(b.position)
+                total += 1
+            }
+        }
+        center.div(total)
+        return center.sub(this.velocity).div(100)
     }
 
     repel() {
-        return createVector(0, 0)
+        let repulsion = createVector()
+        for (let b of boids) {
+            let d = this.position.dist(b.position)
+            if (b != this && d < 10)
+                repulsion.sub(b.position.sub(this.position))
+        }
+        return repulsion.div(100)
     }
 
     update() {
-        this.velocity.add(this.align())
+        // this.velocity.add(this.align())
         this.velocity.add(this.attract())
-        this.velocity.add(this.repel())
+        // this.velocity.add(this.repel())
         this.position.add(this.velocity)
     }
 
