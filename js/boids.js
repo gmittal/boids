@@ -5,7 +5,7 @@
 class Boid {
     constructor() {
         this.position = createVector(100 * Math.random() + 20, 100 * Math.random() + 20)
-        this.velocity = createVector(2 * Math.random() - 0.5, 2 * Math.random() - 0.5)
+        this.velocity = createVector(-4 * Math.random() - 0.5, 4 * Math.random() - 0.5)
     }
 
     align() {
@@ -33,6 +33,13 @@ class Boid {
 
     render() {
         this.update()
+
+        /* Keep the flock bounded within the visible window */
+        if (this.position.x > windowWidth) this.position.x = 0
+        if (this.position.y > windowHeight) this.position.y = 0
+        if (this.position.x < 0) this.position.x = windowWidth
+        if (this.position.y < 0) this.position.y = windowHeight
+
         noStroke()
         ellipse(this.position.x, this.position.y, 5, 5)
     }
