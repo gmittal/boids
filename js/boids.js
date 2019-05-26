@@ -6,22 +6,19 @@ class Boid {
     constructor() {
         this.position = createVector(windowWidth / 2, windowHeight / 2)
         this.velocity = p5.Vector.random2D()
-        this.speed = 2
+        this.speed = 4
         this.force = 3e-2
     }
 
     align() {
         let avg = createVector()
-        let total = 0
-        for (let b of boids) {
-            let d = this.position.dist(b.position)
-            if (b != this && d < 25) {
-                avg.add(b.velocity)
-                total += 1
-            }
+        let n = 0
+        for (let b of this.neighbors(50)) {
+            avg.add(b.velocity)
+            n += 1
         }
-        if (total > 0) {
-            avg.div(total)
+        if (n > 0) {
+            avg.div(n)
             avg.setMag(this.speed)
             avg.sub(this.velocity)
             avg.limit(this.force)
@@ -31,42 +28,23 @@ class Boid {
 
     attract() {
         let center = createVector()
-        let total = 0
-        for (let b of boids) {
-            let d = this.position.dist(b.position)
-            if (b != this && d < 50) {
-                center.add(b.position)
-                total += 1
-            }
+        let n = 0
+        for (let b of this.neighbors(50)) {
+            center.add(b.position)
+            n += 1
         }
-        if (total > 0) {
-            center.div(total)
-            center.sub(this.position)
-            center.setMag(this.maxSpeed)
-            center.sub(this.velocity)
-            center.limit(this.force)
-        }
-        return center
+        return this.normalize(center, n)
     }
 
     repel() {
         let repulsion = createVector()
-        let total = 0
-        for (let b of boids) {
-            let d = this.position.dist(b.position)
-            if (b != this && d < 24) {
-                let diff = p5.Vector.sub(this.position, b.position)
-                diff.mult(1 / d)
-                repulsion.add(diff)
-                total += 1
-            }
-        }
-        if (total > 0) {
-            repulsion.div(total)
-            repulsion.setMag(this.maxSpeed)
-            repulsion.sub(this.velocity)
-            repulsion.limit(this.force)
-        }
+        let n = 0
+        // neighbors(24, () => {
+        //     let diff = p5.Vector.sub(this.position, b.position)
+        //     diff.mult(1 / (d + 1))
+        //     repulsion.add(diff)
+        //     n += 1
+        // })
         return repulsion
     }
 
@@ -89,7 +67,29 @@ class Boid {
 
         /* Draw boid */
         noStroke()
-        ellipse(this.position.x, this.position.y, 5, 5)
+        ellipse(this.position.x, this.position.y, 10, 10)
+    }
+
+    /* Normalize vectors according to Reynolds' rules */
+    normalize(v, n) {
+        let u = v.copy()
+        if (n > 0) {
+            console.log(n)
+            u = p5.Vector.div(u, n)
+            u.setMag(this.maxSpeed)
+            u.sub(this.velocity)
+            u.limit(this.force)
+        }
+        return u
+    }
+
+    /* Naive nearest neighbors */
+    neighbors(radius) {
+        let bs = []
+        for (let b of boids)
+            if (b != this && this.position.dist(b.position) < radius)
+                bs.push(b)
+        return bs
     }
 }
 
