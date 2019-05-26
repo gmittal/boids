@@ -6,14 +6,18 @@ class Boid {
     constructor() {
         this.position = createVector(100 * Math.random() + 20, 100 * Math.random() + 20)
         this.velocity = createVector(-4 * Math.random() - 0.5, 4 * Math.random() - 0.5)
+        this.perception = 10
     }
 
     align() {
         let avg = createVector()
-        for (let b of boids)
-            if (b != this) avg.add(b.velocity)
+        for (let b of boids) {
+            let d = this.position.dist(b.position)
+            if (b != this && d < this.perception)
+                avg.add(b.velocity)
+        }
         avg.div(boids.length - 1)
-        return avg.sub(this.velocity).div(8)
+        return avg.sub(this.velocity).div(30)
     }
 
     attract() {
@@ -32,14 +36,16 @@ class Boid {
     }
 
     render() {
+        /* Apply Reynolds' rules */
         this.update()
 
-        /* Keep the flock bounded within the visible window */
+        /* Keep the boid bounded within the visible window */
         if (this.position.x > windowWidth) this.position.x = 0
         if (this.position.y > windowHeight) this.position.y = 0
         if (this.position.x < 0) this.position.x = windowWidth
         if (this.position.y < 0) this.position.y = windowHeight
 
+        /* Draw boid */
         noStroke()
         ellipse(this.position.x, this.position.y, 5, 5)
     }
