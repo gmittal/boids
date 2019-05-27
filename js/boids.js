@@ -6,40 +6,37 @@ class Boid {
     constructor() {
         this.position = createVector(windowWidth / 2, windowHeight / 2)
         this.velocity = p5.Vector.random2D()
-        this.speed = 4
+        this.speed = 10
         this.force = 3e-2
     }
 
     align() {
-        let avg = createVector()
-        let n = 0
-        for (let b of this.neighbors(50)) {
-            avg.add(b.velocity)
-            n += 1
-        }
-        return this.normalize(avg, n)
+        return this.rule(25, (v, other) => {
+            v.add(other.velocity)
+        })
     }
 
     attract() {
         let center = createVector()
-        let n = 0
-        for (let b of this.neighbors(50)) {
-            center.add(b.position)
-            n += 1
+        let nearest = this.neighbors(50)
+        for (let b of nearest) center.add(b.position)
+        // return this.normalize(center, nearest.length)
+        if (nearest.length > 0) {
+            center.div(nearest.length)
+            center.sub(this.position)
+            center.setMag(this.maxSpeed)
+            center.sub(this.velocity)
+            center.limit(this.force)
         }
-        return this.normalize(center, n)
+        return center
     }
 
     repel() {
-        let repulsion = createVector()
-        let n = 0
-        for (let b of this.neighbors(24)) {
-            let diff = p5.Vector.sub(this.position, b.position)
+        return this.rule(24, (v, other) => {
+            let diff = p5.Vector.sub(this.position, other.position)
             diff.mult(1 / (diff.mag() + 1))
-            repulsion.add(diff)
-            n += 1
-        }
-        return this.normalize(repulsion, n)
+            v.add(diff)
+        })
     }
 
     update() {
@@ -61,7 +58,14 @@ class Boid {
 
         /* Draw boid */
         noStroke()
-        ellipse(this.position.x, this.position.y, 10, 10)
+        ellipse(this.position.x, this.position.y, 5, 5)
+    }
+
+    rule(radius, fn) {
+        let avg = createVector()
+        let nearest = this.neighbors(radius)
+        for (let b of nearest) fn(avg, b)
+        return this.normalize(avg, nearest.length)
     }
 
     /* Normalize vectors according to Reynolds' rules */
@@ -89,10 +93,10 @@ class Boid {
 const boids = []
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
+    createCanvas(windowWidth - 5, windowHeight - 5);
 
     /* Create the flock */
-    for (let i = 0; i < 200; i += 1) {
+    for (let i = 0; i < 180; i += 1) {
         boids.push(new Boid())
     }
 }
