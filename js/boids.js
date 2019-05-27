@@ -1,5 +1,6 @@
 /**
-* Boids Simulation
+ * Boids Simulation
+ * Written by Gautam Mittal
 */
 
 class Boid {
@@ -10,29 +11,23 @@ class Boid {
         this.force = 3e-2
     }
 
+    /* Match neighbors' average velocity */
     align() {
-        return this.rule(25, (v, other) => {
+        return this.rule(25, false, (v, other) => {
             v.add(other.velocity)
         })
     }
 
+    /* Move towards neighbors' center of mass */
     attract() {
-        let center = createVector()
-        let nearest = this.neighbors(50)
-        for (let b of nearest) center.add(b.position)
-        // return this.normalize(center, nearest.length)
-        if (nearest.length > 0) {
-            center.div(nearest.length)
-            center.sub(this.position)
-            center.setMag(this.maxSpeed)
-            center.sub(this.velocity)
-            center.limit(this.force)
-        }
-        return center
+        return this.rule(50, true, (v, other) => {
+            v.add(other.position)
+        })
     }
 
+    /* Don't overcrowd neighbors */
     repel() {
-        return this.rule(24, (v, other) => {
+        return this.rule(24, false, (v, other) => {
             let diff = p5.Vector.sub(this.position, other.position)
             diff.mult(1 / (diff.mag() + 1))
             v.add(diff)
@@ -61,18 +56,20 @@ class Boid {
         ellipse(this.position.x, this.position.y, 5, 5)
     }
 
-    rule(radius, fn) {
+    /* General swarm heuristic HOF */
+    rule(radius, normPos, fn) {
         let avg = createVector()
         let nearest = this.neighbors(radius)
         for (let b of nearest) fn(avg, b)
-        return this.normalize(avg, nearest.length)
+        return this.normalize(avg, nearest.length, normPos)
     }
 
-    /* Normalize vectors according to Reynolds' rules */
-    normalize(v, n) {
+    /* Normalize vector norms */
+    normalize(v, n, normPos) {
         let u = v.copy()
         if (n > 0) {
             u = p5.Vector.div(u, n)
+            if (normPos) u.sub(this.position)
             u.setMag(this.maxSpeed)
             u.sub(this.velocity)
             u.limit(this.force)
@@ -80,7 +77,7 @@ class Boid {
         return u
     }
 
-    /* Naive nearest neighbors */
+    /* (Naive) nearest neighbors */
     neighbors(radius) {
         let bs = []
         for (let b of boids)
