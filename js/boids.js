@@ -17,13 +17,7 @@ class Boid {
             avg.add(b.velocity)
             n += 1
         }
-        if (n > 0) {
-            avg.div(n)
-            avg.setMag(this.speed)
-            avg.sub(this.velocity)
-            avg.limit(this.force)
-        }
-        return avg
+        return this.normalize(avg, n)
     }
 
     attract() {
@@ -39,13 +33,13 @@ class Boid {
     repel() {
         let repulsion = createVector()
         let n = 0
-        // neighbors(24, () => {
-        //     let diff = p5.Vector.sub(this.position, b.position)
-        //     diff.mult(1 / (d + 1))
-        //     repulsion.add(diff)
-        //     n += 1
-        // })
-        return repulsion
+        for (let b of this.neighbors(24)) {
+            let diff = p5.Vector.sub(this.position, b.position)
+            diff.mult(1 / (diff.mag() + 1))
+            repulsion.add(diff)
+            n += 1
+        }
+        return this.normalize(repulsion, n)
     }
 
     update() {
@@ -74,7 +68,6 @@ class Boid {
     normalize(v, n) {
         let u = v.copy()
         if (n > 0) {
-            console.log(n)
             u = p5.Vector.div(u, n)
             u.setMag(this.maxSpeed)
             u.sub(this.velocity)
@@ -111,4 +104,4 @@ function draw() {
     }
 }
 
-window.onresize = () => { resizeCanvas(windowWidth, windowHeight) }
+window.onresize = () => { resizeCanvas(windowWidth - 5, windowHeight - 5) }
