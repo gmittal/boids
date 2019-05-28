@@ -7,7 +7,7 @@ class Boid {
     constructor() {
         this.position = createVector(windowWidth / 2, windowHeight / 2)
         this.velocity = p5.Vector.random2D()
-        this.speed = 10
+        this.speed = 2
         this.force = 3e-2
     }
 
@@ -43,6 +43,7 @@ class Boid {
 
     render() {
         /* Apply Reynolds' rules */
+        let currentPos = this.position
         this.update()
 
         /* Keep the boid bounded within the visible window */
@@ -51,9 +52,20 @@ class Boid {
         if (this.position.x < 0) this.position.x = windowWidth
         if (this.position.y < 0) this.position.y = windowHeight
 
+        tree.insert(this.position)
+        tree.remove(currentPos)
+
         /* Draw boid */
-        noStroke()
-        ellipse(this.position.x, this.position.y, 5, 5)
+        fill(0)
+        push();
+        translate(this.position.x, this.position.y);
+        rotate(this.velocity.heading() + radians(90));
+        beginShape(TRIANGLES);
+        vertex(0, -1.5*2);
+        vertex(-1.5, 1.5*2);
+        vertex(1.5, 1.5*2);
+        endShape();
+        pop();
     }
 
     /* General swarm heuristic HOF */
@@ -70,36 +82,61 @@ class Boid {
         if (n > 0) {
             u = p5.Vector.div(u, n)
             if (normPos) u.sub(this.position)
-            u.setMag(this.maxSpeed)
+            u.setMag(this.speed)
             u.sub(this.velocity)
             u.limit(this.force)
         }
         return u
     }
 
+    /* L2 distance */
+    static distance(boid, other) {
+        return boid.position.dist(other.position)
+    }
+
     /* (Naive) nearest neighbors */
     neighbors(radius) {
         let bs = []
         for (let b of boids)
-            if (b != this && this.position.dist(b.position) < radius)
+            if (b != this && Boid.distance(this, b) < radius)
                 bs.push(b)
         return bs
     }
+
+    /* (Fast) nearest neighbors */
+    knn(k, radius) {
+
+    }
+
+}
+
+const distance = (a, b) => {
+  return Math.pow(a.x - b.x, 2) +  Math.pow(a.y - b.y, 2)
+}
+
+const points = () => {
+    let p = []
+    for (let b of boids) p.push(b.position)
+    return p
 }
 
 const boids = []
+let tree = new kdTree(points(), distance, ['x', 'y'])
 
 function setup() {
-    createCanvas(windowWidth - 5, windowHeight - 5);
+    createCanvas(windowWidth - 5, windowHeight - 5)
 
     /* Create the flock */
-    for (let i = 0; i < 180; i += 1) {
-        boids.push(new Boid())
+    for (let i = 0; i < 400; i += 1) {
+        let boid = new Boid()
+        tree.insert(boid.position)
+        boids.push(boid)
     }
 }
 
 function draw() {
-    background(0)
+    background(255)
+    tree = new kdTree(points(), distance, ['x', 'y'])
     for (let boid of boids) {
         boid.render()
     }
