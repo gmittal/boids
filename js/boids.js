@@ -43,7 +43,7 @@ class Boid {
 
     render() {
         /* Apply Reynolds' rules */
-        let currentPos = this.position
+        let currentPos = {x: this.position.x, y: this.position.y, boid: this}
         this.update()
 
         /* Keep the boid bounded within the visible window */
@@ -52,7 +52,7 @@ class Boid {
         if (this.position.x < 0) this.position.x = windowWidth
         if (this.position.y < 0) this.position.y = windowHeight
 
-        tree.insert(this.position)
+        tree.insert({x: this.position.x, y: this.position.y, boid: this})
         tree.remove(currentPos)
 
         /* Draw boid */
@@ -71,7 +71,7 @@ class Boid {
     /* General swarm heuristic HOF */
     rule(radius, normPos, fn) {
         let avg = createVector()
-        let nearest = this.neighbors(radius)
+        let nearest = this.knn(20, radius)
         for (let b of nearest) fn(avg, b)
         return this.normalize(avg, nearest.length, normPos)
     }
@@ -105,18 +105,20 @@ class Boid {
 
     /* (Fast) nearest neighbors */
     knn(k, radius) {
-
+        let bs = []
+        for (let v of tree.nearest(this.position, k, radius)) bs.push(v[0].boid)
+        return bs
     }
 
 }
 
 const distance = (a, b) => {
-  return Math.pow(a.x - b.x, 2) +  Math.pow(a.y - b.y, 2)
+  return Math.sqrt(Math.pow(a.x - b.x, 2) +  Math.pow(a.y - b.y, 2))
 }
 
 const points = () => {
     let p = []
-    for (let b of boids) p.push(b.position)
+    for (let b of boids) p.push({x: b.position.x, y: b.position.y, boid: b})
     return p
 }
 
@@ -127,9 +129,9 @@ function setup() {
     createCanvas(windowWidth - 5, windowHeight - 5)
 
     /* Create the flock */
-    for (let i = 0; i < 400; i += 1) {
+    for (let i = 0; i < 500; i += 1) {
         let boid = new Boid()
-        tree.insert(boid.position)
+        tree.insert({x: boid.position.x, y: boid.position.y, boid: boid})
         boids.push(boid)
     }
 }
